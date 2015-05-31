@@ -64,7 +64,7 @@ component
 						httpService.addParam(type="FORMFIELD", name="#lCase(key)#", value="#structFind(arguments.params,key)#");
 				break;
 
-				case "DELETE": case "PUT":
+				case "DELETE": case "PATCH": case "PUT":
 				break;
 
 				default:
