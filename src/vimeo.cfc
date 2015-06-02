@@ -133,21 +133,26 @@ component
 		 */
 		function perform_upload( file_pt, ticket ){
 
+			chunkSize = 1024*1024*50; // upload par fragments de 50 Mo
 			bitsUploaded = 0;
+
 			/* composant http pour l'upload */
 			httpService = new http( method="PUT" );
 			httpService.setUrl( arguments.ticket.upload_link_secure );
 
+			/* boucle do-while d'upload de la vidéo par fragment, avec vérification à chaque envoi */
 			do { 
 
 				/* upload (d'une partie) de la vidéo */
 				httpService.clearParams();
-				httpService.addParam( type="HEADER", name="Content-Length", value="#arguments.file_pt.size-bitsUploaded#" );
-				httpService.addParam( type="HEADER", name="Content-Type", value="video/#lCase(listLast(arguments.file_pt.name,'.'))#" );				
-				if (bitsUploaded)
-					httpService.addParam( type="HEADER", name="Content-Range", value="bytes #bitsUploaded+1#-#arguments.file_pt.size#/#arguments.file_pt.size#");
-
-				httpService.addParam( type="BODY", value="#fileRead(arguments.file_pt,arguments.file_pt.size)#" );
+				httpService.addParam( type="HEADER", name="Content-Type", value="video/#lCase(listLast(arguments.file_pt.name,'.'))#" );
+				if (!bitsUploaded){ // si 1er fragment
+					httpService.addParam( type="HEADER", name="Content-Length", value="#arguments.file_pt.size#" );
+				} else { // si 2e fragment ou +
+					httpService.addParam( type="HEADER", name="Content-Length", value="#min(arguments.file_pt.size-bitsUploaded,chunkSize)#" );
+					httpService.addParam( type="HEADER", name="Content-Range", value="bytes #bitsUploaded#-#min(bitsUploaded+chunkSize,arguments.file_pt.size)#/#arguments.file_pt.size#");
+				} // fin if
+				httpService.addParam( type="BODY", value="#fileRead(arguments.file_pt,chunkSize)#" );
 
 				result = httpService.send().getPrefix(); 
 				if ( val(result.statusCode) neq 200 )
@@ -163,15 +168,15 @@ component
 				bitsUploaded = listLast(result.ResponseHeader.range,"-");
 
 			} // fin do
-			while (bitsUploaded lt arguments.file_pt.size);
+			while (bitsUploaded lt arguments.file_pt.size); // on boucle tant qu'on n'a pas uploadé toute la vidéo
 
 			/* libération du pointeur */
 			fileClose(arguments.file_pt);
 
 			/* finalisation de l'upload */
 			finalisation = this.callAPI( endpoint="#arguments.ticket.complete_uri#", method="DELETE" );
-			if ( val(finalisation.statusCode) neq 201 )
-				return( "Erreur lors de la finalisation : " & finalisation.statusCode );
+			if ( !isDefined("finalisation.statusCode") or val(finalisation.statusCode)!=201 )
+				return( "Erreur lors de la finalisation" );
 			else
 				return(finalisation.ResponseHeader.Location);
 
