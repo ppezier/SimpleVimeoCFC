@@ -21,7 +21,7 @@ component
 		/**
 		 * constructeur
 		 */
-		function init(accessToken=""){
+		any function init( string accessToken="" ){
 			this.setAccessToken(arguments.accessToken);
 			return(this);
 		}
@@ -33,10 +33,10 @@ component
 		 * @params.hint    struct de paramètres
 		 * @method.hint  méthode (GET ou POST)
 		 */
-		function callAPI( endPoint="", params={}, method="GET" ){
+		any function callAPI( string endPoint="", struct params={}, string method="GET" ){
 
 			/* préparation de l'appel à l'API Vimeo */
-			httpService = new http( method="#arguments.method#" );
+			var httpService = new http( method="#arguments.method#" );
 			if (!compareNoCase(left(arguments.endPoint,7),"/oembed"))
 				httpService.setUrl(this.API_OEMBED_URL & endpoint);
 			else
@@ -73,7 +73,7 @@ component
 			} // fin switch
 
 			/* appel de l'API */
-			result = httpService.send().getPrefix(); 
+			var result = httpService.send().getPrefix(); 
 
 			/**
 			 * traitement du contenu renvoyé
@@ -101,23 +101,23 @@ component
 		 * @file_path.hint	string $file_path Path to the video file to upload.
 		 * @upgrade_to_1080.hint boolean $upgrade_to_1080 Should we automatically upgrade the video file to 1080p
 		 */
-		function upload( file_path, upgrade_to_1080=false ){
+		any function upload( string file_path, boolean upgrade_to_1080=false ){
 
 			/* vérificaion du quota */
-			me = this.callAPI( endpoint="/me" );
-			quota = val(me.upload_quota.space.free);
+			var me = this.callAPI( endpoint="/me" );
+			var quota = val(me.upload_quota.space.free);
 
 			/* pointeur sur le fichier */
-			file_pt = fileOpen( arguments.file_path , "readBinary" );
+			var file_pt = fileOpen( arguments.file_path , "readBinary" );
 			if (file_pt.size gt quota)
 				return( "Erreur : quota insuffisant (" & (file_pt.size-quota)/1000000 & " Mo manquants)." );
 
 			/* génération d'un ticket d'upload */
-			ticketParams = {
+			var ticketParams = {
 				type = "streaming",
 				upgrade_to_1080 = arguments.upgrade_to_1080
 			};
-			ticket = this.callAPI( endpoint="/me/videos", params="#ticketParams#", method="POST" ); 
+			var ticket = this.callAPI( endpoint="/me/videos", params="#ticketParams#", method="POST" ); 
 			if (!isDefined("ticket.upload_link_secure"))
 				return( "Erreur : ticket invalide." );
 
@@ -131,13 +131,13 @@ component
 		 * @file_pt.hint file obj Pointeur sur le fichier à uploader
 		 * @ticket.hint ticket obj Données du ticket d'upload
 		 */
-		function perform_upload( file_pt, ticket ){
+		any function perform_upload( struct file_pt, struct ticket ){
 
-			chunkSize = 1024*1024*50; // upload par fragments de 50 Mo
-			bitsUploaded = 0;
+			var chunkSize = 1024*1024*50; // upload par fragments de 50 Mo
+			var bitsUploaded = 0;
 
 			/* composant http pour l'upload */
-			httpService = new http( method="PUT" );
+			var httpService = new http( method="PUT" );
 			httpService.setUrl( arguments.ticket.upload_link_secure );
 
 			/* boucle do-while d'upload de la vidéo par fragment, avec vérification à chaque envoi */
@@ -154,7 +154,7 @@ component
 				} // fin if
 				httpService.addParam( type="BODY", value="#fileRead(arguments.file_pt,chunkSize)#" );
 
-				result = httpService.send().getPrefix(); 
+				var result = httpService.send().getPrefix(); 
 				if ( val(result.statusCode) neq 200 )
 					return( "Erreur d'upload : " & result.statusCode );
 
@@ -165,7 +165,7 @@ component
 				httpService.addParam( type="HEADER", name="Content-Range", value="bytes */*" );
 				result = httpService.send().getPrefix();
 
-				bitsUploaded = listLast(result.ResponseHeader.range,"-");
+				var bitsUploaded = listLast(result.ResponseHeader.range,"-");
 
 			} // fin do
 			while (bitsUploaded lt arguments.file_pt.size); // on boucle tant qu'on n'a pas uploadé toute la vidéo
@@ -174,7 +174,7 @@ component
 			fileClose(arguments.file_pt);
 
 			/* finalisation de l'upload */
-			finalisation = this.callAPI( endpoint="#arguments.ticket.complete_uri#", method="DELETE" );
+			var finalisation = this.callAPI( endpoint="#arguments.ticket.complete_uri#", method="DELETE" );
 			if ( !isDefined("finalisation.statusCode") or val(finalisation.statusCode)!=201 )
 				return( "Erreur lors de la finalisation" );
 			else
