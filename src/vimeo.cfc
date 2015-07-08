@@ -21,7 +21,7 @@ component
 		/**
 		 * constructeur
 		 */
-		any function init( string accessToken="" ){
+		public vimeo function init( string accessToken="" ){
 			this.setAccessToken(arguments.accessToken);
 			return(this);
 		}
@@ -33,7 +33,7 @@ component
 		 * @params.hint    struct de paramètres
 		 * @method.hint  méthode (GET ou POST)
 		 */
-		any function callAPI( string endPoint="", struct params={}, string method="GET" ){
+		public any function callAPI( string endPoint="", struct params={}, string method="GET" ){
 
 			/* préparation de l'appel à l'API Vimeo */
 			var httpService = new http( method="#arguments.method#" );
@@ -101,7 +101,7 @@ component
 		 * @file_path.hint	string $file_path Path to the video file to upload.
 		 * @upgrade_to_1080.hint boolean $upgrade_to_1080 Should we automatically upgrade the video file to 1080p
 		 */
-		any function upload( string file_path, boolean upgrade_to_1080=false ){
+		public any function upload( required string file_path, boolean upgrade_to_1080=false ){
 
 			/* vérificaion du quota */
 			var me = this.callAPI( endpoint="/me" );
@@ -121,8 +121,11 @@ component
 			if (!isDefined("ticket.upload_link_secure"))
 				return( "Erreur : ticket invalide." );
 
-			/* appel de la fonction d'upload proprement dite */
-			return( this.perform_upload(file_pt,ticket) );
+			/*
+				appel de la fonction d'upload proprement dite
+				scope "variables" et non pas "this" car la méthode est en accès "private"
+			*/
+			return( variables.perform_upload(file_pt,ticket) );
 		} // fin function upload
 
 
@@ -131,7 +134,7 @@ component
 		 * @file_pt.hint file obj Pointeur sur le fichier à uploader
 		 * @ticket.hint ticket obj Données du ticket d'upload
 		 */
-		any function perform_upload( struct file_pt, struct ticket ){
+		private any function perform_upload( required file_pt, required struct ticket ){
 
 			var chunkSize = 1024*1024*50; // upload par fragments de 50 Mo
 			var bitsUploaded = 0;
