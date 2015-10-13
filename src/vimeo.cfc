@@ -29,9 +29,9 @@ component
 
 		/**
 		 * Appelle l'API
-		 * @endPoint.hint  endpoint demandé (utiliser "/oembed.json" pour l'API oEmbed)
-		 * @params.hint    struct de paramètres
-		 * @method.hint  méthode (GET ou POST)
+		 * @endPoint.hint	endpoint demandé (utiliser "/oembed.json" pour l'API oEmbed)
+		 * @params.hint		struct de paramètres
+		 * @method.hint		méthode (GET ou POST)
 		 */
 		public any function callAPI( string endPoint="", struct params={}, string method="GET" ){
 
@@ -98,8 +98,8 @@ component
 
 		/**
 		 * Uploade un fichier
-		 * @file_path.hint	string $file_path Path to the video file to upload.
-		 * @upgrade_to_1080.hint boolean $upgrade_to_1080 Should we automatically upgrade the video file to 1080p
+		 * @file_path.hint			string $file_path Path to the video file to upload.
+		 * @upgrade_to_1080.hint	boolean $upgrade_to_1080 Should we automatically upgrade the video file to 1080p
 		 */
 		public any function upload( required string file_path, boolean upgrade_to_1080=false ){
 
@@ -109,7 +109,9 @@ component
 
 			/* pointeur sur le fichier */
 			var file_pt = fileOpen( arguments.file_path , "readBinary" );
-			if (file_pt.size gt quota)
+			if (!file_pt.size)
+				return( "Erreur : fichier vide." );
+			else if (file_pt.size gt quota)
 				return( "Erreur : quota insuffisant (" & (file_pt.size-quota)/1000000 & " Mo manquants)." );
 
 			/* génération d'un ticket d'upload */
@@ -123,7 +125,7 @@ component
 
 			/*
 				appel de la fonction d'upload proprement dite
-				scope "variables" et non pas "this" car la méthode est en accès "private"
+				utilisation du scope "variables" et non pas "this" car la méthode est en accès "private"
 			*/
 			return( variables.perform_upload(file_pt,ticket) );
 		} // fin function upload
@@ -131,8 +133,8 @@ component
 
 		/**
 		 * Reçoit un ticket d'upload et réalise l'upload effectif
-		 * @file_pt.hint file obj Pointeur sur le fichier à uploader
-		 * @ticket.hint ticket obj Données du ticket d'upload
+		 * @file_pt.hint	file obj Pointeur sur le fichier à uploader
+		 * @ticket.hint		ticket obj Données du ticket d'upload
 		 */
 		private any function perform_upload( required file_pt, required struct ticket ){
 
