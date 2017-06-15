@@ -44,7 +44,7 @@ component
 
 			/* définition d'une struct pour les headers puis ajout */
 			headers = {
-				Accept = "application/vnd.vimeo.*+json;version=3.2"
+				Accept = this.API_VERSION
 			};
 			if (len(this.getAccessToken()))
 				structInsert(headers, "Authorization", "bearer "&this.getAccessToken());
@@ -53,7 +53,7 @@ component
 
 			/* ajout des paramètres en fonction de la méthode */
 			switch(uCase(method)){
-				
+
 				case "GET":
 					for (key in arguments.params)
 						httpService.addParam(type="URL", name="#lCase(key)#", value="#structFind(arguments.params,key)#");
@@ -68,12 +68,13 @@ component
 				break;
 
 				default:
-					return( "Erreur : Méthode non prise en charge." );
+					return( "Erreur : Méthode non prise en charge par l'API." );
 				break;
+				
 			} // fin switch
 
 			/* appel de l'API */
-			var result = httpService.send().getPrefix(); 
+			var result = httpService.send().getPrefix();
 
 			/**
 			 * traitement du contenu renvoyé
@@ -90,7 +91,7 @@ component
 				else
 					return( result );
 			} else {
-				return( "Erreur : " & result.statusCode );	
+				return( "Erreur : " & result.statusCode );
 			} // fin if
 
 		} // fin function callAPI
@@ -119,7 +120,7 @@ component
 				type = "streaming",
 				upgrade_to_1080 = arguments.upgrade_to_1080
 			};
-			var ticket = this.callAPI( endpoint="/me/videos", params="#ticketParams#", method="POST" ); 
+			var ticket = this.callAPI( endpoint="/me/videos", params="#ticketParams#", method="POST" );
 			if (!isDefined("ticket.upload_link_secure"))
 				return( "Erreur : ticket invalide." );
 
@@ -146,7 +147,7 @@ component
 			httpService.setUrl( arguments.ticket.upload_link_secure );
 
 			/* boucle do-while d'upload de la vidéo par fragment, avec vérification à chaque envoi */
-			do { 
+			do {
 
 				/* upload (d'une partie) de la vidéo */
 				httpService.clearParams();
@@ -159,7 +160,7 @@ component
 				} // fin if
 				httpService.addParam( type="BODY", value="#fileRead(arguments.file_pt,chunkSize)#" );
 
-				var result = httpService.send().getPrefix(); 
+				var result = httpService.send().getPrefix();
 				if ( val(result.statusCode) neq 200 )
 					return( "Erreur d'upload : " & result.statusCode );
 
